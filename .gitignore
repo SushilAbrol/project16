@@ -1,0 +1,5 @@
+audit.log
+*.db
+report.*
+__pycache__/
+.pytest_cache/
