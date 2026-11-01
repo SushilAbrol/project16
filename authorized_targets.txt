@@ -1,0 +1,5 @@
+# Systems you are AUTHORIZED to scan (one per line: IP, CIDR or hostname).
+# Only add lab machines or systems you own / have written permission for.
+127.0.0.1
+# 192.168.56.0/24   # example: VirtualBox/VMware lab network
+# scanme.nmap.org   # Nmap's public test host (permitted by its owners)
