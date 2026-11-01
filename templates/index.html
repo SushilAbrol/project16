@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Authorized Port Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9eef1;--panel:#f7f9fa;--ink:#14212b;--mute:#566673;--line:#cfd9de;--sonar:#0e7c86;--open:#e09f1f;--alarm:#c8372d;--cell:#d5dfe4}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1a22;--panel:#14232d;--ink:#e6eef2;--mute:#8fa3af;--line:#243642;--sonar:#4fc3cc;--open:#f0b542;--alarm:#ff6b5e;--cell:#1d303b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.45;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:720px;margin:0 auto;padding:22px 16px 56px}
+h1{font-size:clamp(2rem,9vw,3rem);line-height:1;font-weight:800;letter-spacing:-.035em;margin:0 0 12px}
+h2{font-size:1.05rem;margin:0 0 10px;font-weight:600}
+.lede{color:var(--mute);margin:0 0 14px;max-width:46ch}
+.mono,.chip,input.t,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.scope{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 22px}
+.chip{font-size:.78rem;padding:4px 9px;border:1px solid var(--sonar);border-radius:99px;color:var(--sonar)}
+form{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+label.f{display:block;font-size:.85rem;color:var(--mute);margin:12px 0 5px}
+label.f:first-child{margin-top:0}
+input.t{width:100%;padding:13px 12px;font-size:1rem;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+input.t:focus,button:focus-visible,.seg button:focus-visible{outline:2px solid var(--sonar);outline-offset:2px}
+.seg{display:flex;gap:6px;margin-bottom:8px}
+.seg button{flex:1;padding:9px 4px;font:inherit;font-size:.85rem;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)}
+.seg button.on{background:var(--sonar);border-color:var(--sonar);color:#fff}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:.92rem}
+.chk input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--sonar);flex:none}
+.go{position:relative;overflow:hidden;width:100%;margin-top:16px;padding:15px;font:inherit;font-weight:600;font-size:1.05rem;border:0;border-radius:12px;background:var(--ink);color:var(--bg)}
+.go.busy::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(127,127,127,.45),transparent);animation:slide 1s linear infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.err{margin-top:16px;padding:14px;border-left:5px solid var(--alarm);background:var(--panel);border-radius:6px}
+.err b{color:var(--alarm)}
+#results{margin-top:30px;scroll-margin-top:12px}
+.sum{font-size:1.35rem;font-weight:600;letter-spacing:-.02em;line-height:1.25;margin:0 0 4px}
+.meta{color:var(--mute);font-size:.88rem;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(11px,1fr));gap:3px;margin-bottom:6px}
+.grid.big{grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px}
+.c{aspect-ratio:1;border-radius:3px;background:var(--cell);animation:pop .35s both;animation-delay:var(--d)}
+.c.open{background:var(--open)}.c.risky{background:var(--alarm)}
+.big .c{border-radius:8px;display:grid;place-items:center;font:500 .68rem "IBM Plex Mono",monospace;color:var(--mute)}
+.big .c.open,.big .c.risky{color:#fff}
+@keyframes pop{from{opacity:0;transform:scale(.4)}}
+.key{display:flex;gap:14px;font-size:.78rem;color:var(--mute);margin:8px 0 18px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+ul.find{list-style:none;margin:0;padding:0}
+ul.find li{display:flex;gap:14px;align-items:baseline;padding:13px 0;border-top:1px solid var(--line)}
+.num{font-size:1.5rem;font-weight:500;min-width:4.2ch}
+.find .risky .num{color:var(--alarm)}
+.find small{display:block;color:var(--mute)}
+.find .note{color:var(--alarm);font-size:.9rem}
+.tools{display:flex;gap:8px;margin-top:14px}
+.tools button{padding:10px 14px;font:inherit;font-size:.9rem;border:1.5px solid var(--line);border-radius:10px;background:transparent;color:var(--ink)}
+.hist{margin-top:34px}
+.hist button{display:flex;justify-content:space-between;width:100%;padding:12px 0;font:inherit;background:none;border:0;border-top:1px solid var(--line);color:var(--ink);text-align:left}
+.hist small{color:var(--mute)}
+@media(prefers-reduced-motion:reduce){.c,.go.busy::after{animation:none}}
+</style></head><body><main>
+<h1>Scan only what you’re cleared to scan.</h1>
+<p class="lede">Targets outside the scope list are blocked and written to the audit log.</p>
+<div class="scope">{% for s in scope_entries %}<span class="chip">{{ s }}</span>{% endfor %}</div>
+
+<form method="post" action="/" id="scanform">
+<label class="f" for="target">Target</label>
+<input class="t" id="target" name="target" value="{{ target }}" placeholder="127.0.0.1" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+<label class="f" for="ports">Ports</label>
+<div class="seg">
+<button type="button" data-p="top">Top 26</button>
+<button type="button" data-p="1-1024">1–1024</button>
+<button type="button" data-p="80,443,8080">Web</button>
+</div>
+<input class="t" id="ports" name="ports" value="{{ ports }}" autocapitalize="none" spellcheck="false">
+<label class="chk"><input type="checkbox" name="banner" {{ 'checked' if banner }}><span>Read service banners</span></label>
+<label class="chk"><input type="checkbox" name="auth" required><span>I have permission to scan this target</span></label>
+<button class="go" id="go" type="submit">Run scan</button>
+</form>
+
+{% if error %}<div class="err"><b>Scan blocked.</b> {{ error }}</div>{% endif %}
+
+{% if meta %}
+<section id="results">
+<p class="sum">{{ results|length }} open port{{ '' if results|length == 1 else 's' }} on {{ meta.target }}.
+{% if risky %}{{ risky }} {{ 'is' if risky == 1 else 'are' }} worth closing or locking down.{% else %}None are flagged as risky.{% endif %}</p>
+<p class="meta">{{ meta.ports_scanned }} ports across {{ meta.hosts }} host{{ '' if meta.hosts == 1 else 's' }} in {{ meta.duration }}s</p>
+<div class="grid {{ 'big' if grid|length <= 64 }}" role="img" aria-label="Map of scanned ports">
+{% for c in grid %}<div class="c {{ c.s }}" style="--d:{{ [loop.index0 * 6, 1100]|min }}ms" title="{{ c.p }}">{{ c.p if grid|length <= 64 }}</div>{% endfor %}
+</div>
+<div class="key"><span><i style="background:var(--cell)"></i>closed</span><span><i style="background:var(--open)"></i>open</span><span><i style="background:var(--alarm)"></i>flagged</span></div>
+<ul class="find">
+{% for r in results %}<li class="{{ 'risky' if r.risk }}"><span class="num">{{ r.port }}</span><div>{{ r.service }}<small class="mono">{{ r.ip }}</small>{% if r.risk %}<span class="note">{{ r.risk }}</span>{% endif %}{% if r.banner %}<small class="mono">{{ r.banner }}</small>{% endif %}</div></li>
+{% else %}<li><div>No open ports found in this range.</div></li>{% endfor %}
+</ul>
+<div class="tools"><button type="button" id="dl">Save JSON</button><button type="button" onclick="scrollTo({top:0,behavior:'smooth'})">Scan again</button></div>
+<script id="payload" type="application/json">{{ payload|tojson }}</script>
+</section>
+{% endif %}
+
+{% if history %}
+<section class="hist"><h2>Recent scans</h2>
+{% for h in history %}<button type="button" data-t="{{ h[0] }}"><span class="mono">{{ h[0] }}</span><small>{{ h[2] }} ports · {{ h[1][11:16] }} UTC</small></button>{% endfor %}
+</section>{% endif %}
+</main>
+<script>
+const $=s=>document.querySelector(s),ports=$('#ports');
+function mark(){document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on',b.dataset.p===ports.value.trim()))}
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ports.value=b.dataset.p;mark()});
+ports.oninput=mark;mark();
+document.querySelectorAll('.hist button').forEach(b=>b.onclick=()=>{$('#target').value=b.dataset.t;scrollTo({top:0,behavior:'smooth'})});
+$('#scanform').addEventListener('submit',()=>{const g=$('#go');g.classList.add('busy');g.textContent='Scanning…'});
+const r=$('#results');if(r)setTimeout(()=>r.scrollIntoView({behavior:'smooth'}),60);
+const dl=$('#dl');if(dl)dl.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('#payload').textContent],{type:'application/json'}));a.download='scan-report.json';a.click()};
+</script></body></html>
